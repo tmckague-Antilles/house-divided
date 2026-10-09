@@ -1,6 +1,6 @@
 {
-  "name": "House Divided",
-  "short_name": "House Divided",
+  "name": "Game Day",
+  "short_name": "Game Day",
   "description": "Bears and 49ers game day: upcoming games, quick stats and highlights.",
   "start_url": ".",
   "display": "standalone",
