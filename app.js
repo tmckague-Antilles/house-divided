@@ -306,8 +306,9 @@ function gameRow(g) {
   const net = g.tv ? `<em class="net${g.stream ? ' stream' : ''}">${esc(g.tv.split(' / ')[0])}</em>` : '';
   const inner = `
     <span class="row-wk">Wk ${g.week}</span>
+    <i class="row-at">${g.home ? 'vs' : '@'}</i>
     ${img(g.opp.logo, 'row-logo')}
-    <span class="row-opp"><i>${g.home ? 'vs' : '@'}</i> ${esc(g.opp.name)}</span>
+    <span class="row-opp">${esc(g.opp.name)}</span>
     ${done
       ? `<span class="row-end"><b class="res ${result}">${result}</b>${esc(g.us)}–${esc(g.them)}</span>`
       : `<span class="row-end"><b>${esc(w.day)}</b>${[esc(w.time), net].filter(Boolean).join(' · ')}</span>`}`;
