@@ -11,6 +11,8 @@ const TEAMS = {
 const LIVE_REFRESH_MS = 30 * 1000;
 const STALE_MS = 5 * 60 * 1000;
 const UPCOMING_PREVIEW = 4;
+// Networks you need an app for rather than a TV channel.
+const STREAMERS = /prime video|netflix|peacock|youtube|espn\+|paramount\+|nfl\+|disney\+|hbo max/i;
 
 const store = {
   get(key) {
@@ -79,6 +81,7 @@ function slimGame(e, teamId) {
   const us = c.competitors.find(x => String(x.team.id) === teamId);
   const them = c.competitors.find(x => x !== us);
   const st = c.status.type;
+  const networks = (c.broadcasts || []).map(b => b.media?.shortName).filter(Boolean);
   const link = rel => safeUrl((e.links || []).find(l => l.rel.includes(rel) && l.rel.includes('desktop'))?.href);
   return {
     id: e.id,
@@ -100,7 +103,8 @@ function slimGame(e, teamId) {
     lost: them.winner === true,
     venue: c.venue?.fullName,
     city: [c.venue?.address?.city, c.venue?.address?.state].filter(Boolean).join(', '),
-    tv: (c.broadcasts || []).map(b => b.media?.shortName).filter(Boolean).join(' / '),
+    tv: networks.join(' / '),
+    stream: networks.length > 0 && networks.every(n => STREAMERS.test(n)),
     gamecast: link('gamecast') || link('summary'),
     recap: link('recap'),
   };
@@ -271,9 +275,12 @@ function nextCard(t, m) {
   const us = side(t.name, LOGO(t.abbr), live ? g.us : null, m.record);
   const them = side(g.opp.name, g.opp.logo, live ? g.them : null);
   const rival = Object.values(TEAMS).some(x => x.id === g.opp.id);
-  const tag = live
-    ? '<span class="pill live"><i></i>Live</span>'
-    : (g.tv ? `<span class="pill">${esc(g.tv)}</span>` : '');
+  const tag = live ? '<span class="pill live"><i></i>Live</span>' : '';
+  const watch = g.tv ? `
+    <div class="watch${g.stream ? ' stream' : ''}">
+      <span class="watch-label">Watch on</span><b>${esc(g.tv)}</b>
+      ${g.stream ? '<span class="watch-note">Streaming only — you’ll need the app</span>' : ''}
+    </div>` : '';
   return `
   <section class="card next${live ? ' is-live' : ''}">
     ${head(`${live ? 'Now playing' : 'Next up'} · Week ${g.week}`, tag)}
@@ -285,6 +292,7 @@ function nextCard(t, m) {
     </div>
     <p class="when">${esc(w.day)}${w.time ? `<span>·</span>${esc(w.time)}` : ''}</p>
     <p class="where">${esc([g.venue, g.city].filter(Boolean).join(' · '))}</p>
+    ${watch}
     ${live
       ? (g.gamecast ? `<div class="btns"><a class="btn primary" href="${esc(g.gamecast)}" target="_blank" rel="noopener">Follow live on ESPN</a></div>` : '')
       : (g.timeValid ? `<div class="countdown" data-kick="${esc(g.date)}"></div>` : '')}
@@ -295,13 +303,14 @@ function gameRow(g) {
   const w = when(g);
   const done = g.state === 'post';
   const result = g.won ? 'W' : g.lost ? 'L' : 'T';
+  const net = g.tv ? `<em class="net${g.stream ? ' stream' : ''}">${esc(g.tv.split(' / ')[0])}</em>` : '';
   const inner = `
     <span class="row-wk">Wk ${g.week}</span>
     ${img(g.opp.logo, 'row-logo')}
     <span class="row-opp"><i>${g.home ? 'vs' : '@'}</i> ${esc(g.opp.name)}</span>
     ${done
       ? `<span class="row-end"><b class="res ${result}">${result}</b>${esc(g.us)}–${esc(g.them)}</span>`
-      : `<span class="row-end"><b>${esc(w.day)}</b>${esc([w.time, g.tv.split(' / ')[0]].filter(Boolean).join(' · '))}</span>`}`;
+      : `<span class="row-end"><b>${esc(w.day)}</b>${[esc(w.time), net].filter(Boolean).join(' · ')}</span>`}`;
   return done && g.gamecast
     ? `<a class="row" href="${esc(g.gamecast)}" target="_blank" rel="noopener">${inner}</a>`
     : `<div class="row">${inner}</div>`;

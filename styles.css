@@ -5,6 +5,7 @@
   --line: rgba(255, 255, 255, 0.09);
   --win: #35c27a;
   --loss: #f0616d;
+  --stream: #5ccaff;
   --display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
   --tabs-h: 68px;
 }
@@ -255,6 +256,31 @@ i { font-style: normal; }
 .when span { margin: 0 8px; color: var(--accent); }
 .where { margin-top: 2px; text-align: center; font-size: 13px; color: var(--muted); }
 
+.watch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  margin-top: 14px;
+}
+.watch-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.watch b {
+  padding: 5px 14px 4px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.12);
+  font: 700 21px/1.15 var(--display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.watch.stream b {
+  background: color-mix(in srgb, var(--stream) 16%, transparent);
+  border-color: color-mix(in srgb, var(--stream) 55%, transparent);
+  color: var(--stream);
+}
+.watch-note { flex-basis: 100%; text-align: center; font-size: 12px; color: var(--stream); }
+
 .countdown {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -293,6 +319,8 @@ i { font-style: normal; }
 .row-opp i { color: var(--muted); font-weight: 400; }
 .row-end { text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .row-end b { display: block; font-size: 13px; color: var(--text); }
+.row-end em { font-style: normal; }
+.row-end .stream { color: var(--stream); font-weight: 700; }
 .row.bye { grid-template-columns: 38px 1fr; min-height: 40px; }
 .row.bye .row-opp { color: var(--muted); font-weight: 400; }
 
