@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>House Divided</title>
+  <meta name="description" content="Bears and 49ers game day: upcoming games, quick stats and highlights.">
+  <meta name="theme-color" content="#0B162A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="House Divided">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://a.espncdn.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-team="chi">
+  <main id="app" aria-live="polite"></main>
+
+  <nav class="tabs" aria-label="Teams">
+    <button class="tab" data-team="chi" type="button">
+      <img src="https://a.espncdn.com/i/teamlogos/nfl/500-dark/chi.png" alt="">
+      <span class="tab-text"><b>Bears</b><i data-record="chi">&nbsp;</i></span>
+    </button>
+    <button class="tab" data-team="sf" type="button">
+      <img src="https://a.espncdn.com/i/teamlogos/nfl/500-dark/sf.png" alt="">
+      <span class="tab-text"><b>49ers</b><i data-record="sf">&nbsp;</i></span>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
