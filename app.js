@@ -63,9 +63,16 @@ function ago(iso) {
 }
 
 async function getJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${res.status} ${url}`);
-  return res.json();
+  // A request left hanging (say, the phone locks mid-fetch) would otherwise block every later refresh.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`${res.status} ${url}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function pickLogo(team) {
@@ -110,12 +117,11 @@ function slimGame(e, teamId) {
   };
 }
 
-function pickStats(statsJ, recStats) {
+function pickStats(statsJ, allowed) {
   const cats = statsJ?.results?.stats?.categories || [];
   const get = (cat, name) => cats.find(c => c.name === cat)?.stats.find(s => s.name === name)?.displayValue;
   const pct = v => (v == null ? null : `${Number(v).toFixed(1)}%`);
   const signed = v => (v == null ? null : (Number(v) > 0 ? `+${v}` : String(v)));
-  const allowed = recStats.avgPointsAgainst;
   return [
     ['Points / game', get('scoring', 'totalPointsPerGame')],
     ['Allowed / game', allowed == null ? null : allowed.toFixed(1)],
@@ -162,6 +168,27 @@ function pickStars(sumJ, teamId) {
   }).filter(Boolean);
 }
 
+// Splits and points are worked out from the schedule so the app only relies on
+// ESPN feeds that web pages are allowed to read.
+function tally(games) {
+  const done = games.filter(g => g.state === 'post' && g.us != null && g.them != null);
+  const rec = list => {
+    const w = list.filter(g => g.won).length;
+    const l = list.filter(g => g.lost).length;
+    const t = list.length - w - l;
+    return t ? `${w}-${l}-${t}` : `${w}-${l}`;
+  };
+  const pf = done.reduce((n, g) => n + Number(g.us), 0);
+  const pa = done.reduce((n, g) => n + Number(g.them), 0);
+  return {
+    record: rec(done),
+    home: rec(done.filter(g => g.home)),
+    away: rec(done.filter(g => !g.home)),
+    diff: done.length ? pf - pa : null,
+    allowed: done.length ? pa / done.length : null,
+  };
+}
+
 function streakOf(games) {
   const done = games.filter(g => g.state === 'post' && (g.won || g.lost)).reverse();
   if (!done.length) return null;
@@ -173,8 +200,7 @@ function streakOf(games) {
 async function loadTeam(key) {
   const t = TEAMS[key];
   const prev = state.models[key];
-  const [teamJ, schedJ, statsJ, newsJ] = await Promise.all([
-    getJSON(`${API}/teams/${t.abbr}`),
+  const [schedJ, statsJ, newsJ] = await Promise.all([
     getJSON(`${API}/teams/${t.abbr}/schedule`),
     getJSON(`${API}/teams/${t.id}/statistics`).catch(() => null),
     getJSON(`${API}/news?team=${t.id}&limit=50`).catch(() => null),
@@ -189,20 +215,19 @@ async function loadTeam(key) {
     stars = pickStars(await getJSON(`${API}/summary?event=${last.id}`).catch(() => null), t.id);
   }
 
-  const rec = teamJ.team.record?.items || [];
-  const recStats = Object.fromEntries((rec.find(r => r.type === 'total')?.stats || []).map(s => [s.name, s.value]));
-  const diff = recStats.pointDifferential;
+  const sum = tally(games);
+  const diff = sum.diff;
 
   return {
-    record: rec.find(r => r.type === 'total')?.summary || '0-0',
-    homeRec: rec.find(r => r.type === 'home')?.summary,
-    awayRec: rec.find(r => r.type === 'road')?.summary,
-    standing: teamJ.team.standingSummary,
+    record: schedJ.team?.recordSummary || sum.record,
+    homeRec: sum.home,
+    awayRec: sum.away,
+    standing: schedJ.team?.standingSummary,
     diff: diff == null ? null : (diff > 0 ? `+${diff}` : String(diff)),
     streak: streakOf(games),
     season: schedJ.season?.year,
     games,
-    stats: pickStats(statsJ, recStats),
+    stats: pickStats(statsJ, sum.allowed),
     stars,
     starsFor: last?.id,
     ...pickNews(newsJ),
